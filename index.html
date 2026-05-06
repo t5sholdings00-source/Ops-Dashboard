@@ -1,0 +1,1044 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <title>T5S Operations · Dashboard</title>
+
+  <link rel="icon" type="image/png" href="assets/llogo nb.png"/>
+  <link rel="apple-touch-icon" href="assets/llogo nb.png"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cormorant+SC:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_live_Y2xlcmsub3BzLndlYXJldDVzLmNvbSQ"
+    src="https://clerk.ops.wearet5s.com/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
+
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    input,textarea,select{font-size:16px !important}
+
+    :root{
+      --green:#1D9E75;--green-dim:rgba(29,158,117,.14);--green-hi:rgba(29,158,117,.38);
+      --green-glow:rgba(29,158,117,.06);
+      --red-hi:#CC2020;
+      --bg:#000000;--bg2:#000000;--bg3:#000000;
+      --chrome:#C8C8D0;--white:#F0EEEC;--dim:#6A6A64;--dim2:#888880;
+      --border:rgba(29,158,117,.15);--border-hi:rgba(29,158,117,.35);
+      --sidebar:224px;
+      --bottom-nav:56px;
+    }
+    html,body{height:100%;overflow:hidden}
+    body{background:var(--bg);color:var(--white);font-family:'Cormorant Garamond',Georgia,serif;display:flex;flex-direction:column}
+    body::after{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:.025;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+    #loadScreen{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;transition:opacity .6s ease}
+    #loadScreen.out{opacity:0;pointer-events:none}
+    .ls-rule{width:1px;height:80px;background:linear-gradient(to bottom,transparent,var(--green),transparent);animation:lsPulse 1.8s ease-in-out infinite}
+    @keyframes lsPulse{0%,100%{opacity:.3}50%{opacity:1}}
+    .ls-mark{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.6em;color:var(--green);text-transform:uppercase}
+    .ls-name{font-family:'Cinzel',serif;font-size:2.8rem;font-weight:900;letter-spacing:.25em;color:var(--chrome);line-height:1}
+    .ls-sub{font-family:'Cormorant SC',serif;font-size:.48rem;letter-spacing:.5em;color:var(--dim2);text-transform:uppercase}
+    .ls-status{font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;min-height:1em}
+    .ls-bar{width:200px;height:1px;background:var(--border);overflow:hidden;position:relative}
+    .ls-bar-fill{position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--green),transparent);animation:lsBar 1.4s ease-in-out infinite}
+    @keyframes lsBar{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+
+    #errorScreen{position:fixed;inset:0;z-index:8999;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem;text-align:center}
+    #errorScreen.show{display:flex}
+    .err-title{font-family:'Cinzel',serif;font-size:1.2rem;letter-spacing:.2em;color:var(--red-hi)}
+    .err-msg{font-size:.95rem;font-style:italic;color:var(--dim2);max-width:480px;line-height:1.8}
+
+    #topbar{height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 1.8rem;background:var(--bg);border-bottom:.5px solid var(--border);position:relative;z-index:100}
+    .tb-left{display:flex;align-items:center;gap:1.4rem}
+    .tb-mark{font-family:'Cinzel',serif;font-size:.78rem;font-weight:600;letter-spacing:.28em;color:var(--green)}
+    .tb-divider{width:1px;height:18px;background:var(--border)}
+    .tb-crumb{font-family:'Cinzel',serif;font-size:.4rem;letter-spacing:.3em;color:var(--dim2);text-transform:uppercase}
+    .tb-right{display:flex;align-items:center;gap:1rem}
+    .tb-tier{font-family:'Cinzel',serif;font-size:.4rem;letter-spacing:.25em;color:var(--green);border:.5px solid var(--border);padding:.22rem .6rem;text-transform:uppercase}
+    .tb-name{font-family:'Cinzel',serif;font-size:.42rem;letter-spacing:.2em;color:var(--dim2);text-transform:uppercase}
+    #clerkBtn{display:flex;align-items:center}
+
+    #shell{flex:1;display:flex;overflow:hidden;position:relative;z-index:1}
+
+    #sidebar{width:var(--sidebar);flex-shrink:0;display:flex;flex-direction:column;background:var(--bg2);border-right:.5px solid var(--border);overflow-y:auto}
+    #sidebar::-webkit-scrollbar{width:2px}
+    #sidebar::-webkit-scrollbar-thumb{background:var(--border)}
+    .sb-section{padding:1.4rem 1rem .4rem}
+    .sb-label{font-family:'Cinzel',serif;font-size:.36rem;letter-spacing:.45em;color:var(--dim);text-transform:uppercase;margin-bottom:.7rem;padding-left:.3rem}
+    .nav-item{display:flex;align-items:center;gap:.7rem;padding:.68rem .9rem;cursor:pointer;border-left:2px solid transparent;transition:all .2s;margin-bottom:1px}
+    .nav-item:hover{background:var(--green-glow);border-left-color:rgba(29,158,117,.3)}
+    .nav-item.active{background:var(--green-glow);border-left-color:var(--green)}
+    .nav-ico{font-size:.7rem;opacity:.4;width:14px;flex-shrink:0;transition:opacity .2s}
+    .nav-item:hover .nav-ico,.nav-item.active .nav-ico{opacity:1}
+    .nav-lbl{font-family:'Cinzel',serif;font-size:.44rem;letter-spacing:.22em;color:var(--dim2);text-transform:uppercase;transition:color .2s}
+    .nav-item:hover .nav-lbl{color:var(--chrome)}
+    .nav-item.active .nav-lbl{color:var(--green)}
+    .nav-badge{margin-left:auto;font-family:'Cinzel',serif;font-size:.34rem;letter-spacing:.12em;color:var(--green);background:rgba(29,158,117,.1);border:.5px solid var(--border);padding:.12rem .38rem}
+    .sb-foot{margin-top:auto;padding:1rem;border-top:.5px solid var(--border)}
+    .sb-back{font-family:'Cinzel',serif;font-size:.4rem;letter-spacing:.25em;color:var(--dim);text-decoration:none;text-transform:uppercase;transition:color .2s;display:block;padding:.4rem 0}
+    .sb-back:hover{color:var(--green)}
+    .live-pip{display:flex;align-items:center;gap:.4rem;margin-top:.6rem}
+    .pip{width:4px;height:4px;border-radius:50%;background:var(--green);animation:pipBlink 2.2s ease-in-out infinite}
+    @keyframes pipBlink{0%,100%{opacity:.25}50%{opacity:1}}
+    .pip-txt{font-family:'Cinzel',serif;font-size:.34rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+
+    /* MOBILE BOTTOM NAV */
+    #bottomNav{
+      display:none;position:fixed;bottom:0;left:0;right:0;
+      padding-bottom:calc(env(safe-area-inset-bottom) + 100px);
+      margin-bottom:-100px;
+      background:rgba(0,0,0,.96);
+      border-top:.5px solid var(--border);
+      z-index:200;padding-left:.3rem;padding-right:.3rem;
+    }
+    .bn-inner{display:flex;align-items:stretch;height:var(--bottom-nav);overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .bn-inner::-webkit-scrollbar{display:none}
+    .bn-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.18rem;padding:.4rem .55rem;cursor:pointer;min-width:52px;flex:1;border-top:2px solid transparent;transition:all .18s;position:relative}
+    .bn-item.active{border-top-color:var(--green)}
+    .bn-item.active .bn-ico{opacity:1;color:var(--green)}
+    .bn-item.active .bn-lbl{color:var(--green)}
+    .bn-ico{font-size:.72rem;opacity:.38;transition:all .18s;color:var(--chrome)}
+    .bn-lbl{font-family:'Cinzel',serif;font-size:.3rem;letter-spacing:.18em;color:var(--dim2);text-transform:uppercase;white-space:nowrap;transition:color .18s}
+    .bn-dot{position:absolute;top:.35rem;right:.35rem;width:5px;height:5px;border-radius:50%;background:var(--green);display:none}
+    .bn-dot.show{display:block}
+
+    #main{flex:1;overflow-y:auto;padding:2.2rem 2.4rem 3rem;background:var(--bg)}
+    #main::-webkit-scrollbar{width:2px}
+    #main::-webkit-scrollbar-thumb{background:var(--border)}
+
+    .panel{display:none}
+    .panel.active{display:block;animation:panelIn .3s cubic-bezier(.16,1,.3,1)}
+    @keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    .ph{margin-bottom:2rem;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:1rem}
+    .ph-left .ph-eyebrow{font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.55em;color:var(--green);text-transform:uppercase;margin-bottom:.35rem;opacity:.7}
+    .ph-left .ph-title{font-family:'Cinzel',serif;font-size:1.55rem;font-weight:900;letter-spacing:.12em;color:var(--chrome);line-height:1}
+    .ph-left .ph-sub{font-size:.92rem;font-weight:300;font-style:italic;color:var(--dim2);margin-top:.35rem}
+    .ph-rule{flex:1;height:.5px;background:linear-gradient(to right,var(--border-hi),transparent);margin-bottom:.4rem;min-width:40px}
+
+    .stat-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:2rem}
+    .sc{background:var(--bg2);padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:background .25s}
+    .sc::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);transform:scaleX(0);transition:transform .4s}
+    .sc:hover{background:var(--green-glow)}.sc:hover::after{transform:scaleX(1)}
+    .sc-lbl{font-family:'Cinzel',serif;font-size:.36rem;letter-spacing:.4em;color:var(--dim);text-transform:uppercase;margin-bottom:.4rem}
+    .sc-val{font-family:'Cinzel',serif;font-size:.82rem;font-weight:600;letter-spacing:.1em;color:var(--chrome)}
+    .sc-val.warn{color:#f59e0b}.sc-val.alert{color:var(--red-hi)}.sc-val.ok{color:var(--green)}
+
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem}
+    .g-full{margin-bottom:1.2rem}
+
+    .card{background:var(--bg2);border:.5px solid var(--border);position:relative}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent)}
+    .ch{padding:1rem 1.4rem;border-bottom:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap}
+    .ct{font-family:'Cinzel',serif;font-size:.44rem;letter-spacing:.35em;color:var(--green);text-transform:uppercase}
+    .cm{font-family:'Cinzel',serif;font-size:.36rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+    .cb{padding:1.2rem 1.4rem}
+
+    .btn{background:transparent;border:.5px solid var(--green);color:var(--green);font-family:'Cinzel',serif;font-size:.44rem;letter-spacing:.35em;padding:.7rem 1.2rem;cursor:pointer;text-transform:uppercase;transition:background .25s,color .25s}
+    .btn:hover{background:var(--green);color:var(--bg)}
+    .btn.ghost{border-color:var(--border);color:var(--dim2)}
+    .btn.ghost:hover{background:var(--border);color:var(--chrome)}
+    .btn.sm{font-size:.38rem;padding:.5rem .85rem}
+    .btn.danger{border-color:rgba(204,32,32,.4);color:var(--red-hi)}
+    .btn.danger:hover{background:var(--red-hi);color:var(--white)}
+    .btn:disabled{opacity:.38;cursor:not-allowed}
+    .btn-row{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
+
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1rem}
+    .form-field{display:flex;flex-direction:column;gap:.35rem}
+    .form-field.full{grid-column:1/-1}
+    .fl{font-family:'Cinzel',serif;font-size:.36rem;letter-spacing:.3em;color:var(--dim);text-transform:uppercase}
+    .fi,.fs,.fta{background:transparent;border:.5px solid var(--border);color:var(--white);font-family:'Cormorant Garamond',serif;font-size:.9rem;padding:.7rem .9rem;outline:none;transition:border-color .3s;width:100%}
+    .fi:focus,.fs:focus,.fta:focus{border-color:var(--green)}
+    .fi::placeholder,.fta::placeholder{color:var(--dim);font-style:italic}
+    .fs{cursor:pointer;appearance:none;-webkit-appearance:none}
+    .fs option{background:#0a0a0a;color:var(--white)}
+    .fta{resize:vertical;min-height:80px;line-height:1.6}
+
+    .pill{font-family:'Cinzel',serif;font-size:.33rem;letter-spacing:.18em;padding:.18rem .5rem;text-transform:uppercase;display:inline-block}
+    .pill.pass{color:#22c55e;border:.5px solid rgba(34,197,94,.28);background:rgba(34,197,94,.05)}
+    .pill.pending{color:#f59e0b;border:.5px solid rgba(245,158,11,.28);background:rgba(245,158,11,.05)}
+    .pill.fail{color:var(--red-hi);border:.5px solid rgba(204,32,32,.28);background:rgba(204,32,32,.05)}
+    .pill.active{color:var(--green);border:.5px solid var(--border-hi);background:var(--green-dim)}
+    .pill.due{color:#f59e0b;border:.5px solid rgba(245,158,11,.28);background:rgba(245,158,11,.05)}
+    .pill.overdue{color:var(--red-hi);border:.5px solid rgba(204,32,32,.28);background:rgba(204,32,32,.05)}
+    .pill.complete{color:#22c55e;border:.5px solid rgba(34,197,94,.28);background:rgba(34,197,94,.05)}
+
+    .prog-wrap{margin-top:.5rem}
+    .prog-label{display:flex;justify-content:space-between;margin-bottom:.3rem}
+    .prog-name{font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.15em;color:var(--chrome)}
+    .prog-pct{font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.1em;color:var(--green)}
+    .prog-bar{height:3px;background:rgba(29,158,117,.12);position:relative;overflow:hidden}
+    .prog-fill{position:absolute;left:0;top:0;bottom:0;background:var(--green);transition:width .6s cubic-bezier(.16,1,.3,1)}
+    .prog-fill.warn{background:#f59e0b}
+    .prog-fill.alert{background:var(--red-hi)}
+
+    .tbl{width:100%;border-collapse:collapse}
+    .tbl th{font-family:'Cinzel',serif;font-size:.34rem;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;padding:.65rem 1rem;border-bottom:.5px solid var(--border);text-align:left;font-weight:400}
+    .tbl td{padding:.85rem 1rem;border-bottom:.5px solid rgba(29,158,117,.05);font-size:.84rem;color:var(--chrome)}
+    .tbl td.italic{font-style:italic;color:var(--dim2)}
+    .tbl tr:last-child td{border-bottom:none}
+    .tbl tr:hover td{background:var(--green-glow);cursor:pointer}
+
+    .empty{font-size:.88rem;font-style:italic;color:var(--dim);padding:1.5rem;text-align:center}
+
+    .modal-bg{display:none;position:fixed;inset:0;z-index:500;background:rgba(5,5,5,.88);align-items:center;justify-content:center;padding:1.5rem}
+    .modal-bg.open{display:flex}
+    .modal{background:var(--bg2);border:.5px solid var(--border-hi);width:100%;max-width:680px;max-height:90vh;overflow-y:auto;position:relative}
+    .modal::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent)}
+    .modal::-webkit-scrollbar{width:2px}
+    .modal::-webkit-scrollbar-thumb{background:var(--border)}
+    .modal-head{padding:1.4rem 1.6rem;border-bottom:.5px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .modal-title{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.3em;color:var(--green);text-transform:uppercase}
+    .modal-close{background:none;border:none;color:var(--dim);font-size:1.1rem;cursor:pointer;line-height:1;transition:color .2s;padding:.2rem}
+    .modal-close:hover{color:var(--chrome)}
+    .modal-body{padding:1.6rem}
+    .modal-foot{padding:1rem 1.6rem;border-top:.5px solid var(--border);display:flex;gap:.7rem;justify-content:flex-end}
+
+    .ir{display:flex;gap:.5rem;align-items:baseline;padding:.6rem 0;border-bottom:.5px solid rgba(29,158,117,.05)}
+    .ir:last-child{border-bottom:none}
+    .ir-lbl{font-family:'Cinzel',serif;font-size:.34rem;letter-spacing:.25em;color:var(--dim);text-transform:uppercase;min-width:140px;flex-shrink:0}
+    .ir-val{font-size:.88rem;font-style:italic;color:var(--chrome);line-height:1.5}
+
+    .domain-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem}
+    .domain-card{background:var(--bg3);border:.5px solid var(--border);padding:1.1rem 1.3rem}
+    .domain-name{font-family:'Cinzel',serif;font-size:.44rem;letter-spacing:.28em;color:var(--chrome);text-transform:uppercase;margin-bottom:.8rem}
+    .domain-prog{display:flex;flex-direction:column;gap:.55rem}
+
+    .comp-item{padding:1rem 1.4rem;border-bottom:.5px solid var(--border);display:flex;align-items:center;gap:1rem;transition:background .2s}
+    .comp-item:last-child{border-bottom:none}
+    .comp-item:hover{background:var(--green-glow)}
+    .comp-ico{width:28px;height:28px;border:.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem}
+    .comp-ico.ok{border-color:rgba(34,197,94,.3);color:#22c55e;background:rgba(34,197,94,.05)}
+    .comp-ico.warn{border-color:rgba(245,158,11,.3);color:#f59e0b;background:rgba(245,158,11,.05)}
+    .comp-ico.fail{border-color:rgba(204,32,32,.3);color:var(--red-hi);background:rgba(204,32,32,.05)}
+    .comp-main{flex:1;min-width:0}
+    .comp-name{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.14em;color:var(--chrome);margin-bottom:.2rem}
+    .comp-due{font-size:.78rem;font-style:italic;color:var(--dim2)}
+    .comp-right{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;flex-shrink:0}
+
+    .alert-banner{border:.5px solid rgba(204,32,32,.3);background:rgba(204,32,32,.04);padding:.85rem 1.4rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:1rem}
+    .ab-dot{width:6px;height:6px;border-radius:50%;background:var(--red-hi);flex-shrink:0;animation:pipBlink 1.5s ease-in-out infinite}
+    .ab-txt{font-family:'Cinzel',serif;font-size:.42rem;letter-spacing:.2em;color:var(--red-hi);text-transform:uppercase}
+
+    .tier-band{display:flex;align-items:center;justify-content:space-between;border:.5px solid var(--border-hi);padding:1.3rem 1.6rem;margin-bottom:1.2rem;flex-wrap:wrap;gap:1rem;background:rgba(29,158,117,.02)}
+    .tb-tier-lbl{font-family:'Cinzel',serif;font-size:.35rem;letter-spacing:.38em;color:var(--dim);text-transform:uppercase;margin-bottom:.3rem}
+    .tb-tier-val{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.18em;color:var(--green)}
+    .tb-note{font-size:.82rem;font-style:italic;color:var(--dim);max-width:280px;line-height:1.6;text-align:right}
+    .ig{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);margin-bottom:1.2rem}
+    .ic{background:var(--bg2);padding:1.3rem 1.4rem}
+    .ic-lbl{font-family:'Cinzel',serif;font-size:.36rem;letter-spacing:.38em;color:var(--dim);text-transform:uppercase;margin-bottom:.45rem}
+    .ic-val{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;color:var(--chrome);word-break:break-word}
+    .adm-badge{display:inline-flex;align-items:center;gap:.5rem;border:.5px solid rgba(29,158,117,.35);padding:.28rem .7rem;margin-bottom:1rem}
+    .adm-badge span{font-family:'Cinzel',serif;font-size:.36rem;letter-spacing:.28em;color:var(--green);text-transform:uppercase}
+
+    #toasts{position:fixed;bottom:calc(var(--bottom-nav) + .8rem);right:1rem;z-index:9000;display:flex;flex-direction:column;gap:.4rem}
+    .tst{font-family:'Cinzel',serif;font-size:.4rem;letter-spacing:.2em;padding:.65rem 1rem;border:.5px solid var(--border-hi);background:var(--bg2);color:var(--green);text-transform:uppercase;animation:tstIn .25s ease}
+    .tst.err{color:var(--red-hi);border-color:rgba(204,32,32,.3)}
+    @keyframes tstIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+
+    #p-account{contain:layout style}
+    #clerkProfile{overflow:visible;min-height:200px}
+    #clerkProfile > *{display:block}
+    .cl-avatarBox,.cl-avatar,.cl-userButtonAvatarBox,.cl-userButtonAvatar{border-radius:50%!important;overflow:hidden!important}
+
+    @media(max-width:900px){
+      :root{--sidebar:190px}
+      .stat-bar{grid-template-columns:1fr 1fr}
+      .g2,.domain-grid{grid-template-columns:1fr}
+    }
+    @media(max-width:640px){
+      :root{--sidebar:0px}
+      #sidebar{display:none}
+      #bottomNav{display:block}
+      html,body{height:100%;height:100dvh}
+      #shell{height:calc(100dvh - 52px - var(--bottom-nav));min-height:0}
+      #main{padding:1.2rem 1rem calc(var(--bottom-nav) + env(safe-area-inset-bottom) + 1.5rem)}
+      .stat-bar{grid-template-columns:1fr 1fr}
+      .ig{grid-template-columns:1fr}
+      .domain-grid{grid-template-columns:1fr}
+      .ph-left .ph-title{font-size:1.15rem}
+      .tb-crumb,.tb-tier{display:none}
+      #toasts{bottom:calc(var(--bottom-nav) + .5rem);right:.5rem;left:.5rem}
+      .tst{font-size:.38rem;padding:.55rem .8rem}
+    }
+  </style>
+</head>
+<body>
+
+<div id="loadScreen">
+  <div class="ls-rule"></div>
+  <div class="ls-mark">T5S Holdings · Division 02</div>
+  <div class="ls-name">OPERATIONS</div>
+  <div class="ls-sub">Social Services · Community · Care</div>
+  <div class="ls-status" id="loadStatus">Initializing…</div>
+  <div class="ls-bar"><div class="ls-bar-fill"></div></div>
+</div>
+
+<div id="errorScreen">
+  <div class="ls-rule"></div>
+  <div class="err-title">Authentication Error</div>
+  <div class="err-msg" id="errMsg">Unable to initialize the Clerk authentication service.</div>
+  <button class="btn" onclick="window.location.reload()">↺ Retry</button>
+  <a class="btn ghost" href="https://ops.wearet5s.com" style="text-decoration:none;display:inline-flex;align-items:center;padding:.7rem 1.2rem">← Return to site</a>
+</div>
+
+<div id="topbar" style="display:none">
+  <div class="tb-left">
+    <span class="tb-mark">T5S Operations</span>
+    <div class="tb-divider"></div>
+    <span class="tb-crumb">Social Services Dashboard</span>
+  </div>
+  <div class="tb-right">
+    <span class="tb-name" id="tbName"></span>
+    <span class="tb-tier" id="tbTier"></span>
+    <div id="clerkBtn"></div>
+  </div>
+</div>
+
+<div id="shell" style="display:none">
+  <nav id="sidebar">
+    <div class="sb-section">
+      <div class="sb-label">Navigation</div>
+      <div class="nav-item active" data-p="overview" onclick="goTo('overview')"><span class="nav-ico">◈</span><span class="nav-lbl">Overview</span></div>
+      <div class="nav-item" data-p="lifeskills" onclick="goTo('lifeskills')"><span class="nav-ico">◇</span><span class="nav-lbl">Life Skills</span><span class="nav-badge" id="lsBadge" style="display:none">0</span></div>
+      <div class="nav-item" data-p="inspections" onclick="goTo('inspections')"><span class="nav-ico">◉</span><span class="nav-lbl">Inspections</span><span class="nav-badge" id="insBadge" style="display:none">!</span></div>
+      <div class="nav-item" data-p="compliance" onclick="goTo('compliance')"><span class="nav-ico">▣</span><span class="nav-lbl">DFPS Compliance</span><span class="nav-badge" id="cmpBadge" style="display:none">!</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Account</div>
+      <div class="nav-item" data-p="account" onclick="goTo('account')"><span class="nav-ico">◎</span><span class="nav-lbl">My Account</span></div>
+      <div class="nav-item" id="adminNav" data-p="admin" onclick="goTo('admin')" style="display:none"><span class="nav-ico">⬡</span><span class="nav-lbl">Admin</span></div>
+    </div>
+    <div class="sb-foot">
+      <a class="sb-back" href="https://ops.wearet5s.com">← ops.wearet5s.com</a>
+      <div class="live-pip"><div class="pip"></div><span class="pip-txt">Live</span></div>
+    </div>
+  </nav>
+
+  <main id="main">
+
+    <!-- OVERVIEW -->
+    <div class="panel active" id="p-overview">
+      <div class="ph">
+        <div class="ph-left">
+          <div class="ph-eyebrow">T5S Operations · Social Services</div>
+          <div class="ph-title" id="ovTitle">Dashboard</div>
+          <div class="ph-sub">Where life meets purpose.</div>
+        </div>
+        <div class="ph-rule"></div>
+      </div>
+      <div id="ovAlerts"></div>
+      <div class="stat-bar">
+        <div class="sc"><div class="sc-lbl">Standing</div><div class="sc-val" id="ovTier">—</div></div>
+        <div class="sc"><div class="sc-lbl">Youth Tracked</div><div class="sc-val" id="ovYouth">—</div></div>
+        <div class="sc"><div class="sc-lbl">Inspections Due</div><div class="sc-val" id="ovInsDue">—</div></div>
+        <div class="sc"><div class="sc-lbl">Compliance Items</div><div class="sc-val" id="ovCmp">—</div></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="ch"><span class="ct">Recent Life Skills Activity</span></div>
+          <div id="ovLS"><div class="empty">Loading…</div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Upcoming Inspections</span></div>
+          <div id="ovIns"><div class="empty">Loading…</div></div>
+        </div>
+      </div>
+      <div class="card g-full">
+        <div class="ch"><span class="ct">DFPS Compliance Status</span><span class="cm" id="ovCmpDate">—</span></div>
+        <div id="ovCmpList"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+
+    <div class="panel" id="p-lifeskills">
+      <div class="ph">
+        <div class="ph-left">
+          <div class="ph-eyebrow">Youth Development</div>
+          <div class="ph-title">Life Skills Tracking</div>
+          <div class="ph-sub">Individual competency progress across all domains.</div>
+        </div>
+        <div class="ph-rule"></div>
+        <div class="btn-row">
+          <button class="btn sm" onclick="openModal('modal-addYouth')">+ Add Youth</button>
+          <button class="btn sm ghost" onclick="openModal('modal-logSkill')">Log Entry</button>
+        </div>
+      </div>
+      <div class="card g-full" style="margin-bottom:1.2rem">
+        <div class="ch">
+          <span class="ct">Youth Roster</span>
+          <div style="display:flex;align-items:center;gap:.6rem">
+            <input id="youthSearch" class="fi" style="width:180px;padding:.42rem .75rem;font-size:.78rem" placeholder="Search youth…" oninput="filterYouth()"/>
+            <span class="cm" id="youthCountLbl">—</span>
+          </div>
+        </div>
+        <div class="cb" style="padding:0;overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>Youth ID</th><th>Facility</th><th>Age</th><th>Overall Progress</th><th>Last Updated</th><th>Status</th><th></th></tr></thead>
+            <tbody id="youthTable"><tr><td colspan="7"><div class="empty">No youth records yet.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="skillDetail" style="display:none">
+        <div class="ph" style="margin-bottom:1rem">
+          <div class="ph-left">
+            <div class="ph-eyebrow">Selected Youth</div>
+            <div class="ph-title" id="sdName" style="font-size:1.1rem">—</div>
+          </div>
+          <button class="btn sm ghost" onclick="closeDetail()">← Back to Roster</button>
+        </div>
+        <div class="domain-grid" id="domainGrid"></div>
+        <div class="card g-full">
+          <div class="ch"><span class="ct">Entry Log</span></div>
+          <div class="cb" style="padding:0;overflow-x:auto">
+            <table class="tbl">
+              <thead><tr><th>Date</th><th>Domain</th><th>Skill</th><th>Score</th><th>Notes</th><th>Staff</th></tr></thead>
+              <tbody id="entryLogTable"><tr><td colspan="6"><div class="empty">No entries yet.</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="panel" id="p-inspections">
+      <div class="ph">
+        <div class="ph-left">
+          <div class="ph-eyebrow">Facility Management</div>
+          <div class="ph-title">Inspection Logs</div>
+          <div class="ph-sub">Internal and DFPS inspection records by facility.</div>
+        </div>
+        <div class="ph-rule"></div>
+        <div class="btn-row">
+          <button class="btn sm" onclick="openModal('modal-addInspection')">+ Log Inspection</button>
+        </div>
+      </div>
+      <div class="stat-bar" style="margin-bottom:1.2rem">
+        <div class="sc"><div class="sc-lbl">Total Logged</div><div class="sc-val" id="insTotalStat">0</div></div>
+        <div class="sc"><div class="sc-lbl">Passed</div><div class="sc-val ok" id="insPassStat">0</div></div>
+        <div class="sc"><div class="sc-lbl">Action Items</div><div class="sc-val warn" id="insWarnStat">0</div></div>
+        <div class="sc"><div class="sc-lbl">Failed / Critical</div><div class="sc-val alert" id="insFailStat">0</div></div>
+      </div>
+      <div id="insAlerts"></div>
+      <div class="card g-full">
+        <div class="ch">
+          <span class="ct">Inspection Records</span>
+          <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+            <select class="fs" id="insFacFilter" style="width:160px;padding:.38rem .6rem;font-size:.78rem" onchange="renderInspections()"><option value="all">All Facilities</option></select>
+            <select class="fs" id="insTypeFilter" style="width:140px;padding:.38rem .6rem;font-size:.78rem" onchange="renderInspections()">
+              <option value="all">All Types</option><option value="Internal">Internal</option>
+              <option value="DFPS">DFPS</option><option value="Fire Safety">Fire Safety</option><option value="Health">Health</option>
+            </select>
+          </div>
+        </div>
+        <div class="cb" style="padding:0;overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>Date</th><th>Facility</th><th>Type</th><th>Inspector</th><th>Result</th><th>Action Items</th><th>Next Due</th><th></th></tr></thead>
+            <tbody id="insTable"><tr><td colspan="8"><div class="empty">No inspections logged yet.</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="panel" id="p-compliance">
+      <div class="ph">
+        <div class="ph-left">
+          <div class="ph-eyebrow">Regulatory</div>
+          <div class="ph-title">DFPS Compliance</div>
+          <div class="ph-sub">Texas Department of Family and Protective Services reporting tracker.</div>
+        </div>
+        <div class="ph-rule"></div>
+        <div class="btn-row">
+          <button class="btn sm" onclick="openModal('modal-addCompliance')">+ Add Item</button>
+          <button class="btn sm ghost" onclick="exportCompliance()">↓ Export Report</button>
+        </div>
+      </div>
+      <div class="stat-bar" style="margin-bottom:1.2rem">
+        <div class="sc"><div class="sc-lbl">Total Items</div><div class="sc-val" id="cmpTotal">0</div></div>
+        <div class="sc"><div class="sc-lbl">Compliant</div><div class="sc-val ok" id="cmpOk">0</div></div>
+        <div class="sc"><div class="sc-lbl">Due Soon</div><div class="sc-val warn" id="cmpDue">0</div></div>
+        <div class="sc"><div class="sc-lbl">Overdue</div><div class="sc-val alert" id="cmpOver">0</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap" id="cmpFilters">
+        <button class="btn sm ghost active" onclick="filterCmp('all',this)">All</button>
+        <button class="btn sm ghost" onclick="filterCmp('Licensing',this)">Licensing</button>
+        <button class="btn sm ghost" onclick="filterCmp('Reporting',this)">Reporting</button>
+        <button class="btn sm ghost" onclick="filterCmp('Staffing',this)">Staffing</button>
+        <button class="btn sm ghost" onclick="filterCmp('Training',this)">Training</button>
+        <button class="btn sm ghost" onclick="filterCmp('Facility',this)">Facility</button>
+      </div>
+      <div class="card g-full" id="cmpList"><div class="empty">No compliance items yet.</div></div>
+    </div>
+
+
+    <div class="panel" id="p-account">
+      <div class="ph">
+        <div class="ph-left"><div class="ph-eyebrow">Profile</div><div class="ph-title">My Account</div></div>
+        <div class="ph-rule"></div>
+      </div>
+      <div id="admBadgeWrap" style="display:none"><div class="adm-badge"><span>⬡ T5S Administration · Executive Access</span></div></div>
+      <div class="tier-band">
+        <div><div class="tb-tier-lbl">Current Standing</div><div class="tb-tier-val" id="acTier">—</div></div>
+        <div class="tb-note">Contact T5S Holdings administration for tier corrections.</div>
+      </div>
+      <div class="ig">
+        <div class="ic"><div class="ic-lbl">Full Name</div><div class="ic-val" id="acName">—</div></div>
+        <div class="ic"><div class="ic-lbl">Email</div><div class="ic-val" id="acEmail">—</div></div>
+        <div class="ic"><div class="ic-lbl">Division</div><div class="ic-val">Operations · Social Services</div></div>
+        <div class="ic"><div class="ic-lbl">Role</div><div class="ic-val" id="acRole">—</div></div>
+        <div class="ic"><div class="ic-lbl">Member Since</div><div class="ic-val" id="acJoined">—</div></div>
+        <div class="ic"><div class="ic-lbl">Portal</div><div class="ic-val">Operations Dashboard v1.1</div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Manage Account</span></div>
+        <div class="cb" id="clerkProfile" style="overflow:visible;min-height:200px"></div>
+      </div>
+    </div>
+
+
+    <div class="panel" id="p-admin">
+      <div class="ph">
+        <div class="ph-left"><div class="ph-eyebrow" style="color:var(--green)">Executive</div><div class="ph-title">Admin Panel</div></div>
+        <div class="ph-rule"></div>
+      </div>
+      <div class="stat-bar" style="margin-bottom:1.5rem">
+        <div class="sc"><div class="sc-lbl">Total Youth</div><div class="sc-val" id="admYouth">—</div></div>
+        <div class="sc"><div class="sc-lbl">Facilities</div><div class="sc-val" id="admFacilities">—</div></div>
+        <div class="sc"><div class="sc-lbl">Your Standing</div><div class="sc-val" id="admMyTier">—</div></div>
+        <div class="sc"><div class="sc-lbl">Version</div><div class="sc-val">1.1 · 2026</div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Data Summary</span></div>
+        <div class="cb">
+          <div class="ir"><span class="ir-lbl">Youth Records</span><span class="ir-val" id="admSumYouth">—</span></div>
+          <div class="ir"><span class="ir-lbl">Inspection Logs</span><span class="ir-val" id="admSumIns">—</span></div>
+          <div class="ir"><span class="ir-lbl">Compliance Items</span><span class="ir-val" id="admSumCmp">—</span></div>
+          <div class="ir"><span class="ir-lbl">Skill Entries</span><span class="ir-val" id="admSumEntries">—</span></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div id="bottomNav">
+  <div class="bn-inner">
+    <div class="bn-item active" data-p="overview" onclick="goTo('overview')"><span class="bn-ico">◈</span><span class="bn-lbl">Overview</span></div>
+    <div class="bn-item" data-p="lifeskills" onclick="goTo('lifeskills')"><span class="bn-ico">◇</span><span class="bn-lbl">Skills</span><span class="bn-dot" id="bnSkillsDot"></span></div>
+    <div class="bn-item" data-p="inspections" onclick="goTo('inspections')"><span class="bn-ico">◉</span><span class="bn-lbl">Inspections</span><span class="bn-dot" id="bnInsDot"></span></div>
+    <div class="bn-item" data-p="compliance" onclick="goTo('compliance')"><span class="bn-ico">▣</span><span class="bn-lbl">DFPS</span><span class="bn-dot" id="bnCmpDot"></span></div>
+    <div class="bn-item" data-p="account" onclick="goTo('account')"><span class="bn-ico">◎</span><span class="bn-lbl">Account</span></div>
+    <div class="bn-item" id="bnAdminItem" data-p="admin" onclick="goTo('admin')" style="display:none"><span class="bn-ico">⬡</span><span class="bn-lbl">Admin</span></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modal-addYouth">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Add Youth Record</span><button class="modal-close" onclick="closeModal('modal-addYouth')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label class="fl">Display ID (no real names)</label><input class="fi" id="y-id" placeholder="e.g. Y-2024-001"/></div>
+        <div class="form-field"><label class="fl">Age</label><input class="fi" id="y-age" type="number" min="5" max="21" placeholder="17"/></div>
+        <div class="form-field"><label class="fl">Facility</label><input class="fi" id="y-facility" placeholder="Facility name…"/></div>
+        <div class="form-field"><label class="fl">Placement Date</label><input class="fi" id="y-placed" type="date"/></div>
+        <div class="form-field"><label class="fl">Case Worker</label><input class="fi" id="y-worker" placeholder="Staff name…"/></div>
+        <div class="form-field"><label class="fl">Status</label><select class="fs" id="y-status"><option>Active</option><option>Reunified</option><option>Transitioned</option><option>Transferred</option></select></div>
+        <div class="form-field full"><label class="fl">Initial Notes</label><textarea class="fta" id="y-notes" placeholder="Any initial placement notes…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost sm" onclick="closeModal('modal-addYouth')">Cancel</button><button class="btn sm" onclick="saveYouth()">Add Youth →</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-logSkill">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Log Skill Entry</span><button class="modal-close" onclick="closeModal('modal-logSkill')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label class="fl">Youth</label><select class="fs" id="sk-youth"><option value="">Select youth…</option></select></div>
+        <div class="form-field"><label class="fl">Date</label><input class="fi" id="sk-date" type="date"/></div>
+        <div class="form-field"><label class="fl">Domain</label>
+          <select class="fs" id="sk-domain" onchange="populateSkills()">
+            <option value="">Select domain…</option>
+            <option>Daily Living</option><option>Financial Literacy</option><option>Education &amp; Career</option>
+            <option>Health &amp; Wellness</option><option>Social Skills</option><option>Housing</option>
+          </select>
+        </div>
+        <div class="form-field"><label class="fl">Skill</label><select class="fs" id="sk-skill"><option value="">Select domain first…</option></select></div>
+        <div class="form-field"><label class="fl">Score (1–5)</label>
+          <select class="fs" id="sk-score">
+            <option value="1">1 — Not Yet Demonstrated</option><option value="2">2 — Emerging</option>
+            <option value="3">3 — Developing</option><option value="4">4 — Proficient</option><option value="5">5 — Mastered</option>
+          </select>
+        </div>
+        <div class="form-field"><label class="fl">Staff</label><input class="fi" id="sk-staff" placeholder="Your name…"/></div>
+        <div class="form-field full"><label class="fl">Observation Notes</label><textarea class="fta" id="sk-notes" placeholder="What was observed?…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost sm" onclick="closeModal('modal-logSkill')">Cancel</button><button class="btn sm" onclick="saveSkillEntry()">Log Entry →</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-addInspection">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Log Inspection</span><button class="modal-close" onclick="closeModal('modal-addInspection')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field"><label class="fl">Facility</label><input class="fi" id="ins-facility" placeholder="Facility name…"/></div>
+        <div class="form-field"><label class="fl">Inspection Date</label><input class="fi" id="ins-date" type="date"/></div>
+        <div class="form-field"><label class="fl">Type</label>
+          <select class="fs" id="ins-type"><option>Internal</option><option>DFPS</option><option>Fire Safety</option><option>Health</option><option>Building &amp; Grounds</option></select>
+        </div>
+        <div class="form-field"><label class="fl">Inspector Name</label><input class="fi" id="ins-inspector" placeholder="Name or agency…"/></div>
+        <div class="form-field"><label class="fl">Result</label>
+          <select class="fs" id="ins-result"><option value="pass">Pass</option><option value="pending">Pass with Conditions</option><option value="fail">Failed / Critical</option></select>
+        </div>
+        <div class="form-field"><label class="fl">Next Inspection Due</label><input class="fi" id="ins-next" type="date"/></div>
+        <div class="form-field full"><label class="fl">Action Items (one per line)</label><textarea class="fta" id="ins-actions" style="min-height:100px" placeholder="List any required corrective actions…"></textarea></div>
+        <div class="form-field full"><label class="fl">Notes / Summary</label><textarea class="fta" id="ins-notes" placeholder="General inspection notes…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost sm" onclick="closeModal('modal-addInspection')">Cancel</button><button class="btn sm" onclick="saveInspection()">Log Inspection →</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-insDetail">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-head"><span class="modal-title">Inspection Detail</span><button class="modal-close" onclick="closeModal('modal-insDetail')">✕</button></div>
+    <div class="modal-body" id="insDetailBody"></div>
+    <div class="modal-foot"><button class="btn ghost sm" onclick="closeModal('modal-insDetail')">Close</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-addCompliance">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Add Compliance Item</span><button class="modal-close" onclick="closeModal('modal-addCompliance')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field full"><label class="fl">Requirement Title</label><input class="fi" id="cmp-title" placeholder="e.g. Annual Minimum Standards Renewal"/></div>
+        <div class="form-field"><label class="fl">Category</label><select class="fs" id="cmp-cat"><option>Licensing</option><option>Reporting</option><option>Staffing</option><option>Training</option><option>Facility</option></select></div>
+        <div class="form-field"><label class="fl">Facility / Scope</label><input class="fi" id="cmp-scope" placeholder="Facility or 'All'"/></div>
+        <div class="form-field"><label class="fl">Due Date</label><input class="fi" id="cmp-due" type="date"/></div>
+        <div class="form-field"><label class="fl">Responsible Party</label><input class="fi" id="cmp-owner" placeholder="Staff name or role…"/></div>
+        <div class="form-field"><label class="fl">Status</label>
+          <select class="fs" id="cmp-status"><option value="active">Compliant / Active</option><option value="due">Due Soon</option><option value="overdue">Overdue</option><option value="pending">Pending Review</option></select>
+        </div>
+        <div class="form-field full"><label class="fl">DFPS Reference / Notes</label><textarea class="fta" id="cmp-notes" placeholder="Relevant DFPS rule, minimum standard number, or notes…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn ghost sm" onclick="closeModal('modal-addCompliance')">Cancel</button><button class="btn sm" onclick="saveCompliance()">Add Item →</button></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+const TIER_LABELS={1:'Tier I — Principal',2:'Tier II — Associate',3:'Tier III — Partner',4:'Tier IV — Member'};
+const SKILL_MAP={
+  'Daily Living':['Meal planning & cooking','Personal hygiene','Laundry & household chores','Time management','Transportation / transit use'],
+  'Financial Literacy':['Budgeting basics','Banking / checking account','Paying bills','Credit & debt awareness','Employment & taxes'],
+  'Education & Career':['School attendance & grades','Resume writing','Job application skills','Interview preparation','Workplace conduct'],
+  'Health & Wellness':['Medical appointments','Medication management','Mental health awareness','Nutrition & exercise','Substance use awareness'],
+  'Social Skills':['Conflict resolution','Communication skills','Healthy relationships','Community involvement','Cultural identity'],
+  'Housing':['Finding housing','Lease understanding','Renter rights & responsibilities','Utilities & household costs','Roommate skills']
+};
+const APPEARANCE={
+  variables:{colorBackground:'#080808',colorText:'#F0EEEC',colorPrimary:'#1D9E75',colorInputBackground:'transparent',colorInputText:'#F0EEEC',borderRadius:'0px',fontFamily:"'Cormorant Garamond',Georgia,serif"},
+  elements:{
+    card:{background:'transparent',border:'.5px solid rgba(29,158,117,.2)',boxShadow:'none',borderRadius:'0'},
+    headerTitle:{fontFamily:"'Cinzel',serif",letterSpacing:'.2em',color:'#C8C8D0'},
+    formFieldLabel:{color:'#888880',fontFamily:"'Cinzel',serif",letterSpacing:'.12em',fontSize:'.7rem'},
+    formFieldInput:{background:'transparent',border:'.5px solid rgba(29,158,117,.3)',borderRadius:'0',color:'#F0EEEC'},
+    formButtonPrimary:{background:'transparent',border:'.5px solid #1D9E75',borderRadius:'0',color:'#1D9E75',fontFamily:"'Cinzel',serif",letterSpacing:'.3em',textTransform:'uppercase',boxShadow:'none'},
+    footerActionLink:{color:'#1D9E75'},
+    avatarBox:{border:'.5px solid rgba(29,158,117,.35)',borderRadius:'50%'},
+    userButtonPopoverCard:{background:'#080808',border:'.5px solid rgba(29,158,117,.25)',boxShadow:'0 8px 32px rgba(0,0,0,.8)'},
+    userButtonPopoverActionButton:{color:'#F0EEEC'},
+    userButtonPopoverActionButtonText:{color:'#F0EEEC'},
+    userButtonPopoverFooter:{background:'#080808'}
+  }
+};
+
+let _U=null,_profileMounted=false,_dashInit=false,_selYouth=null,_cmpFilter='all';
+
+function lsGet(k,fb){try{return JSON.parse(localStorage.getItem(k)||(fb!==undefined?JSON.stringify(fb):null))||fb}catch(e){return fb}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function getYouth(){return lsGet('t5s_ops_youth',[])}
+function setYouth(d){lsSet('t5s_ops_youth',d)}
+function getEntries(){return lsGet('t5s_ops_entries',[])}
+function setEntries(d){lsSet('t5s_ops_entries',d)}
+function getInspections(){return lsGet('t5s_ops_inspections',[])}
+function setInspections(d){lsSet('t5s_ops_inspections',d)}
+function getCompliance(){return lsGet('t5s_ops_compliance',[])}
+function setCompliance(d){lsSet('t5s_ops_compliance',d)}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function toast(msg,err=false){const z=document.getElementById('toasts');const el=document.createElement('div');el.className='tst'+(err?' err':'');el.textContent=msg;z.appendChild(el);setTimeout(()=>el.remove(),3200)}
+function setLoad(msg){const el=document.getElementById('loadStatus');if(el)el.textContent=msg}
+function showError(msg){document.getElementById('loadScreen').classList.add('out');document.getElementById('errMsg').textContent=msg;document.getElementById('errorScreen').classList.add('show')}
+function fmtDate(d){return d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}
+function daysDiff(d){if(!d)return null;return Math.ceil((new Date(d)-new Date())/(1000*60*60*24))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+
+function openModal(id){if(id==='modal-logSkill')refreshYouthSelect();document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open'))});
+
+function goTo(id){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.p===id));
+  document.querySelectorAll('.bn-item').forEach(n=>n.classList.toggle('active',n.dataset.p===id));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='p-'+id));
+  if(id==='admin')refreshAdminStats();
+  document.getElementById('main').scrollTop=0;
+}
+
+function populateDash(user){
+  const meta=user.publicMetadata||{};
+  const name=user.fullName||user.firstName||'Member';
+  const email=user.primaryEmailAddress?.emailAddress||'—';
+  const isAdmin=meta.role==='admin';
+  const tier=parseInt(meta.tier)||4;
+  const role=meta.role||'—';
+  const joined=user.createdAt?new Date(user.createdAt).toLocaleDateString('en-US',{month:'long',year:'numeric'}):'—';
+  _U={uid:user.id,name,email,isAdmin,tier,role,joined};
+  document.getElementById('tbName').textContent=name;
+  document.getElementById('tbTier').textContent=TIER_LABELS[tier]||TIER_LABELS[4];
+  document.getElementById('ovTitle').textContent=`Welcome, ${name.split(' ')[0]}`;
+  document.getElementById('ovTier').textContent=TIER_LABELS[tier]||TIER_LABELS[4];
+  document.getElementById('acTier').textContent=TIER_LABELS[tier]||TIER_LABELS[4];
+  document.getElementById('acName').textContent=name;
+  document.getElementById('acEmail').textContent=email;
+  document.getElementById('acRole').textContent=role!=='admin'?role:'Administrator';
+  document.getElementById('acJoined').textContent=joined;
+  document.getElementById('admBadgeWrap').style.display=isAdmin?'block':'none';
+  document.getElementById('adminNav').style.display=isAdmin?'flex':'none';
+  const bnAdmin=document.getElementById('bnAdminItem');if(bnAdmin)bnAdmin.style.display=isAdmin?'flex':'none';
+  const amt=document.getElementById('admMyTier');if(amt)amt.textContent=TIER_LABELS[tier]||TIER_LABELS[4];
+  refreshAll();
+}
+
+function refreshAll(){renderYouthTable();renderInspections();renderCompliance();refreshOverview();}
+
+function refreshOverview(){
+  const youth=getYouth(),ins=getInspections(),cmp=getCompliance(),entries=getEntries();
+  document.getElementById('ovYouth').textContent=youth.length||'—';
+  const insDue=ins.filter(i=>{const d=daysDiff(i.nextDue);return d!==null&&d<=30&&d>=0}).length;
+  document.getElementById('ovInsDue').textContent=insDue||'—';
+  const cmpIssues=cmp.filter(c=>c.status==='overdue'||c.status==='due').length;
+  document.getElementById('ovCmp').textContent=cmpIssues||'—';
+  const overdueCmp=cmp.filter(c=>c.status==='overdue');
+  const failedIns=ins.filter(i=>i.result==='fail');
+  let alertHTML='';
+  if(overdueCmp.length)alertHTML+=`<div class="alert-banner"><div class="ab-dot"></div><span class="ab-txt">${overdueCmp.length} Overdue DFPS compliance item${overdueCmp.length>1?'s':''} require immediate attention</span></div>`;
+  if(failedIns.length)alertHTML+=`<div class="alert-banner"><div class="ab-dot"></div><span class="ab-txt">${failedIns.length} failed inspection${failedIns.length>1?'s':''} with open corrective actions</span></div>`;
+  document.getElementById('ovAlerts').innerHTML=alertHTML;
+  const lsBadge=document.getElementById('lsBadge');lsBadge.style.display=youth.length?'block':'none';lsBadge.textContent=youth.length;
+  const insBadge=document.getElementById('insBadge');insBadge.style.display=(insDue>0||failedIns.length)?'block':'none';
+  const cmpBadge=document.getElementById('cmpBadge');cmpBadge.style.display=cmpIssues?'block':'none';
+  const d1=document.getElementById('bnSkillsDot');if(d1)d1.classList.toggle('show',youth.length>0);
+  const d2=document.getElementById('bnInsDot');if(d2)d2.classList.toggle('show',(insDue>0||failedIns.length>0));
+  const d3=document.getElementById('bnCmpDot');if(d3)d3.classList.toggle('show',cmpIssues>0);
+  const ovLS=document.getElementById('ovLS');
+  if(!entries.length){ovLS.innerHTML='<div class="empty">No skill entries yet.</div>';}
+  else{ovLS.innerHTML=entries.slice(0,3).map(e=>`
+    <div style="padding:.8rem 1.4rem;border-bottom:.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:.2rem">
+        <span style="font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.14em;color:var(--chrome)">${esc(e.youthId)}</span>
+        <span style="font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.1em;color:var(--dim)">${fmtDate(e.date)}</span>
+      </div>
+      <div style="font-size:.82rem;font-style:italic;color:var(--dim2)">${esc(e.domain)} · ${esc(e.skill)} · Score: ${e.score}/5</div>
+    </div>`).join('')+`<div style="padding:.6rem 1.4rem"><span onclick="goTo('lifeskills')" style="font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.2em;color:var(--green);cursor:pointer;text-transform:uppercase">View All →</span></div>`;}
+  const ovIns=document.getElementById('ovIns');
+  const upcoming=ins.filter(i=>i.nextDue).sort((a,b)=>new Date(a.nextDue)-new Date(b.nextDue)).slice(0,3);
+  if(!upcoming.length){ovIns.innerHTML='<div class="empty">No upcoming inspections.</div>';}
+  else{ovIns.innerHTML=upcoming.map(i=>{const d=daysDiff(i.nextDue);const cls=d<=0?'overdue':d<=14?'due':'active';return`
+    <div style="padding:.8rem 1.4rem;border-bottom:.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.2rem">
+        <span style="font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.14em;color:var(--chrome)">${esc(i.facility)}</span>
+        <span class="pill ${cls}">${d<=0?'Overdue':d<=14?`${d}d`:'Upcoming'}</span>
+      </div>
+      <div style="font-size:.82rem;font-style:italic;color:var(--dim2)">${esc(i.type)} · Due ${fmtDate(i.nextDue)}</div>
+    </div>`}).join('')+`<div style="padding:.6rem 1.4rem"><span onclick="goTo('inspections')" style="font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.2em;color:var(--green);cursor:pointer;text-transform:uppercase">View All →</span></div>`;}
+  const ovCmpEl=document.getElementById('ovCmpList');
+  document.getElementById('ovCmpDate').textContent=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  if(!cmp.length){ovCmpEl.innerHTML='<div class="empty">No compliance items on record.</div>';return;}
+  ovCmpEl.innerHTML=cmp.slice(0,5).map(c=>compItemHTML(c)).join('')+`<div style="padding:.7rem 1.4rem;border-top:.5px solid var(--border)"><span onclick="goTo('compliance')" style="font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.2em;color:var(--green);cursor:pointer;text-transform:uppercase">View Full Report →</span></div>`;
+}
+
+function saveYouth(){
+  const id=document.getElementById('y-id').value.trim(),age=document.getElementById('y-age').value,facility=document.getElementById('y-facility').value.trim();
+  const placed=document.getElementById('y-placed').value,worker=document.getElementById('y-worker').value.trim();
+  const status=document.getElementById('y-status').value,notes=document.getElementById('y-notes').value.trim();
+  if(!id||!facility){toast('Display ID and facility are required.',true);return;}
+  const youth=getYouth();
+  if(youth.find(y=>y.id===id)){toast('Youth ID already exists.',true);return;}
+  youth.unshift({id,age,facility,placed,worker,status,notes,created:new Date().toISOString()});
+  setYouth(youth);closeModal('modal-addYouth');
+  ['y-id','y-age','y-facility','y-placed','y-worker','y-notes'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('y-status').selectedIndex=0;
+  renderYouthTable();refreshOverview();toast('Youth record added.');
+}
+
+function renderYouthTable(){
+  const all=getYouth();
+  const q=(document.getElementById('youthSearch')?.value||'').toLowerCase();
+  const list=q?all.filter(y=>y.id.toLowerCase().includes(q)||y.facility.toLowerCase().includes(q)):all;
+  const lbl=document.getElementById('youthCountLbl');if(lbl)lbl.textContent=`${list.length} record${list.length!==1?'s':''}`;
+  const tb=document.getElementById('youthTable');if(!tb)return;
+  if(!list.length){tb.innerHTML='<tr><td colspan="7"><div class="empty">No youth records match.</div></td></tr>';return;}
+  const entries=getEntries();
+  tb.innerHTML=list.map(y=>{
+    const yE=entries.filter(e=>e.youthId===y.id);
+    const avg=yE.length?(yE.reduce((s,e)=>s+(parseInt(e.score)||0),0)/yE.length/5*100).toFixed(0):null;
+    const last=yE[0];const sc=y.status==='Active'?'active':y.status==='Reunified'?'pass':'pending';
+    return`<tr onclick="selectYouth('${esc(y.id)}')">
+      <td><div style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.14em;color:var(--chrome)">${esc(y.id)}</div></td>
+      <td class="italic">${esc(y.facility)}</td><td>${y.age||'—'}</td>
+      <td>${avg!==null?`<div style="display:flex;align-items:center;gap:.7rem"><div style="flex:1;height:3px;background:rgba(29,158,117,.12);position:relative;overflow:hidden;min-width:80px"><div style="position:absolute;left:0;top:0;bottom:0;background:var(--green);width:${avg}%"></div></div><span style="font-family:'Cinzel',serif;font-size:.38rem;color:var(--green)">${avg}%</span></div>`:'<span style="font-style:italic;color:var(--dim);font-size:.82rem">No entries</span>'}</td>
+      <td class="italic">${last?fmtDate(last.date):'—'}</td>
+      <td><span class="pill ${sc}">${esc(y.status)}</span></td>
+      <td><span style="font-family:'Cinzel',serif;font-size:.35rem;letter-spacing:.18em;color:var(--green);cursor:pointer" onclick="event.stopPropagation();selectYouth('${esc(y.id)}')">Detail →</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterYouth(){renderYouthTable()}
+
+function selectYouth(yid){
+  const youth=getYouth().find(y=>y.id===yid);if(!youth)return;
+  _selYouth=yid;
+  document.getElementById('youthTable').closest('.card').style.display='none';
+  document.querySelector('#p-lifeskills .btn-row').style.display='none';
+  document.getElementById('skillDetail').style.display='block';
+  document.getElementById('sdName').textContent=`${youth.id} · ${youth.facility}`;
+  renderDomainGrid(yid);renderEntryLog(yid);
+  const sel=document.getElementById('sk-youth');for(let o of sel.options)if(o.value===yid){o.selected=true;break;}
+}
+
+function closeDetail(){
+  _selYouth=null;
+  document.getElementById('skillDetail').style.display='none';
+  document.getElementById('youthTable').closest('.card').style.display='block';
+  document.querySelector('#p-lifeskills .btn-row').style.display='flex';
+}
+
+function renderDomainGrid(yid){
+  const entries=getEntries().filter(e=>e.youthId===yid);
+  document.getElementById('domainGrid').innerHTML=Object.keys(SKILL_MAP).map(dom=>{
+    const dE=entries.filter(e=>e.domain===dom);
+    return`<div class="domain-card"><div class="domain-name">${esc(dom)}</div><div class="domain-prog">
+      ${SKILL_MAP[dom].map(sk=>{
+        const latest=dE.filter(e=>e.skill===sk)[0];const score=latest?parseInt(latest.score):0;const pct=score/5*100;
+        const cls=pct>=80?'':pct>=50?'warn':'alert';
+        return`<div class="prog-wrap"><div class="prog-label"><span class="prog-name" style="font-size:.34rem">${esc(sk)}</span><span class="prog-pct" style="${cls==='warn'?'color:#f59e0b':cls==='alert'?'color:var(--red-hi)':''}">${latest?score+'/5':'—'}</span></div><div class="prog-bar"><div class="prog-fill ${cls}" style="width:${pct}%"></div></div></div>`;
+      }).join('')}
+    </div></div>`;
+  }).join('');
+}
+
+function renderEntryLog(yid){
+  const entries=getEntries().filter(e=>e.youthId===yid);
+  const tb=document.getElementById('entryLogTable');
+  if(!entries.length){tb.innerHTML='<tr><td colspan="6"><div class="empty">No entries yet.</div></td></tr>';return;}
+  tb.innerHTML=entries.map(e=>`<tr><td>${fmtDate(e.date)}</td><td>${esc(e.domain)}</td><td class="italic">${esc(e.skill)}</td><td><span style="font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;color:var(--green)">${e.score}/5</span></td><td class="italic" style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.notes)}</td><td>${esc(e.staff)}</td></tr>`).join('');
+}
+
+function populateSkills(){
+  const dom=document.getElementById('sk-domain').value;
+  const sel=document.getElementById('sk-skill');sel.innerHTML='<option value="">Select skill…</option>';
+  if(dom&&SKILL_MAP[dom])SKILL_MAP[dom].forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o)});
+}
+
+function saveSkillEntry(){
+  const youthId=document.getElementById('sk-youth').value,date=document.getElementById('sk-date').value;
+  const domain=document.getElementById('sk-domain').value,skill=document.getElementById('sk-skill').value;
+  const score=document.getElementById('sk-score').value,staff=document.getElementById('sk-staff').value.trim();
+  const notes=document.getElementById('sk-notes').value.trim();
+  if(!youthId||!date||!domain||!skill){toast('Youth, date, domain, and skill are required.',true);return;}
+  const entries=getEntries();entries.unshift({id:uid(),youthId,date,domain,skill,score,staff,notes,created:new Date().toISOString()});
+  setEntries(entries);closeModal('modal-logSkill');
+  ['sk-date','sk-staff','sk-notes'].forEach(f=>document.getElementById(f).value='');
+  if(_selYouth){renderDomainGrid(_selYouth);renderEntryLog(_selYouth);}
+  renderYouthTable();refreshOverview();toast('Skill entry logged.');
+}
+
+function refreshYouthSelect(){
+  const sel=document.getElementById('sk-youth');const prev=sel.value;
+  sel.innerHTML='<option value="">Select youth…</option>';
+  getYouth().forEach(y=>{const o=document.createElement('option');o.value=y.id;o.textContent=`${y.id} · ${y.facility}`;sel.appendChild(o)});
+  if(prev)sel.value=prev;
+}
+
+function saveInspection(){
+  const facility=document.getElementById('ins-facility').value.trim(),date=document.getElementById('ins-date').value;
+  const type=document.getElementById('ins-type').value,inspector=document.getElementById('ins-inspector').value.trim();
+  const result=document.getElementById('ins-result').value,nextDue=document.getElementById('ins-next').value;
+  const actionsRaw=document.getElementById('ins-actions').value.trim(),notes=document.getElementById('ins-notes').value.trim();
+  if(!facility||!date){toast('Facility and date are required.',true);return;}
+  const actions=actionsRaw?actionsRaw.split('\n').map(s=>s.trim()).filter(Boolean):[];
+  const ins=getInspections();ins.unshift({id:uid(),facility,date,type,inspector,result,nextDue,actions,notes,created:new Date().toISOString()});
+  setInspections(ins);closeModal('modal-addInspection');
+  ['ins-facility','ins-date','ins-inspector','ins-next','ins-actions','ins-notes'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('ins-type').selectedIndex=0;document.getElementById('ins-result').selectedIndex=0;
+  populateFacilityFilter();renderInspections();refreshOverview();toast('Inspection logged.');
+}
+
+function populateFacilityFilter(){
+  const sel=document.getElementById('insFacFilter'),prev=sel.value;
+  const facs=[...new Set(getInspections().map(i=>i.facility))].sort();
+  sel.innerHTML='<option value="all">All Facilities</option>'+facs.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
+  if(prev)sel.value=prev;
+}
+
+function renderInspections(){
+  const all=getInspections();
+  const facF=document.getElementById('insFacFilter')?.value||'all',typeF=document.getElementById('insTypeFilter')?.value||'all';
+  const list=all.filter(i=>(facF==='all'||i.facility===facF)&&(typeF==='all'||i.type===typeF));
+  document.getElementById('insTotalStat').textContent=all.length;
+  document.getElementById('insPassStat').textContent=all.filter(i=>i.result==='pass').length;
+  document.getElementById('insWarnStat').textContent=all.filter(i=>i.result==='pending').length;
+  document.getElementById('insFailStat').textContent=all.filter(i=>i.result==='fail').length;
+  const failedWithActions=all.filter(i=>i.result==='fail'&&i.actions?.length);
+  const total=failedWithActions.reduce((s,i)=>s+i.actions.length,0);
+  document.getElementById('insAlerts').innerHTML=failedWithActions.length?`<div class="alert-banner" style="margin-bottom:1.2rem"><div class="ab-dot"></div><span class="ab-txt">${total} open corrective action${total>1?'s':''} from failed inspections</span></div>`:'';
+  const tb=document.getElementById('insTable');
+  if(!list.length){tb.innerHTML='<tr><td colspan="8"><div class="empty">No inspection records match.</div></td></tr>';return;}
+  tb.innerHTML=list.map(i=>{
+    const rc=i.result==='pass'?'pass':i.result==='pending'?'pending':'fail';
+    const rl=i.result==='pass'?'Pass':i.result==='pending'?'Conditions':'Failed';
+    const d=daysDiff(i.nextDue);const dc=d!==null?(d<0?'overdue':d<=14?'due':'pass'):'';
+    return`<tr onclick="showInsDetail('${i.id}')">
+      <td>${fmtDate(i.date)}</td>
+      <td style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.1em">${esc(i.facility)}</td>
+      <td class="italic">${esc(i.type)}</td><td class="italic">${esc(i.inspector)||'—'}</td>
+      <td><span class="pill ${rc}">${rl}</span></td>
+      <td>${i.actions?.length?`<span style="font-family:'Cinzel',serif;font-size:.38rem;letter-spacing:.1em;color:${i.result==='fail'?'var(--red-hi)':'#f59e0b'}">${i.actions.length} item${i.actions.length>1?'s':''}</span>`:'<span class="italic" style="color:var(--dim)">None</span>'}</td>
+      <td>${i.nextDue?`<span class="pill ${dc}" style="font-size:.32rem">${fmtDate(i.nextDue)}</span>`:'—'}</td>
+      <td><span style="font-family:'Cinzel',serif;font-size:.35rem;letter-spacing:.18em;color:var(--green);cursor:pointer">View →</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function showInsDetail(id){
+  const ins=getInspections().find(i=>i.id===id);if(!ins)return;
+  const rc=ins.result==='pass'?'pass':ins.result==='pending'?'pending':'fail';
+  const rl=ins.result==='pass'?'Pass':ins.result==='pending'?'Pass with Conditions':'Failed / Critical';
+  document.getElementById('insDetailBody').innerHTML=`
+    <div class="ir"><span class="ir-lbl">Facility</span><span class="ir-val">${esc(ins.facility)}</span></div>
+    <div class="ir"><span class="ir-lbl">Date</span><span class="ir-val">${fmtDate(ins.date)}</span></div>
+    <div class="ir"><span class="ir-lbl">Type</span><span class="ir-val">${esc(ins.type)}</span></div>
+    <div class="ir"><span class="ir-lbl">Inspector</span><span class="ir-val">${esc(ins.inspector)||'—'}</span></div>
+    <div class="ir"><span class="ir-lbl">Result</span><span class="ir-val"><span class="pill ${rc}">${rl}</span></span></div>
+    <div class="ir"><span class="ir-lbl">Next Due</span><span class="ir-val">${fmtDate(ins.nextDue)}</span></div>
+    ${ins.notes?`<div class="ir"><span class="ir-lbl">Notes</span><span class="ir-val" style="white-space:pre-wrap">${esc(ins.notes)}</span></div>`:''}
+    ${ins.actions?.length?`<div class="ir" style="flex-direction:column;gap:.5rem;align-items:flex-start"><span class="ir-lbl">Action Items</span><ul style="padding-left:1.2rem;font-size:.88rem;font-style:italic;color:var(--chrome);line-height:2">${ins.actions.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></div>`:''}`;
+  openModal('modal-insDetail');
+}
+
+function filterCmp(cat,btn){_cmpFilter=cat;document.querySelectorAll('#cmpFilters .btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCompliance()}
+
+function renderCompliance(){
+  const all=getCompliance();
+  const list=_cmpFilter==='all'?all:all.filter(c=>c.cat===_cmpFilter);
+  document.getElementById('cmpTotal').textContent=all.length;
+  document.getElementById('cmpOk').textContent=all.filter(c=>c.status==='active').length;
+  document.getElementById('cmpDue').textContent=all.filter(c=>c.status==='due').length;
+  document.getElementById('cmpOver').textContent=all.filter(c=>c.status==='overdue').length;
+  const el=document.getElementById('cmpList');
+  if(!list.length){el.innerHTML='<div class="empty">No compliance items in this category.</div>';return;}
+  el.innerHTML=list.map(c=>compItemHTML(c,true)).join('');
+}
+
+function compItemHTML(c,showDelete=false){
+  const ico=c.status==='active'?'✓':c.status==='overdue'?'✕':'!';
+  const iCls=c.status==='active'?'ok':c.status==='overdue'?'fail':'warn';
+  const pCls=c.status==='active'?'active':c.status==='overdue'?'overdue':c.status==='due'?'due':'pending';
+  const pLbl=c.status==='active'?'Compliant':c.status==='overdue'?'Overdue':c.status==='due'?'Due Soon':'Pending';
+  return`<div class="comp-item"><div class="comp-ico ${iCls}">${ico}</div>
+    <div class="comp-main"><div class="comp-name">${esc(c.title)}</div>
+    <div class="comp-due">${esc(c.cat)} · ${esc(c.scope||'All')} · Due ${fmtDate(c.due)} · ${esc(c.owner)}</div>
+    ${c.notes?`<div style="font-size:.78rem;font-style:italic;color:var(--dim);margin-top:.25rem">${esc(c.notes)}</div>`:''}</div>
+    <div class="comp-right"><span class="pill ${pCls}">${pLbl}</span>
+    ${showDelete?`<span onclick="deleteCompliance('${c.id}')" style="font-family:'Cinzel',serif;font-size:.32rem;letter-spacing:.15em;color:var(--dim);cursor:pointer;text-transform:uppercase" title="Remove">✕</span>`:''}</div></div>`;
+}
+
+function saveCompliance(){
+  const title=document.getElementById('cmp-title').value.trim();
+  if(!title){toast('Title is required.',true);return;}
+  const cat=document.getElementById('cmp-cat').value,scope=document.getElementById('cmp-scope').value.trim()||'All';
+  const due=document.getElementById('cmp-due').value,owner=document.getElementById('cmp-owner').value.trim();
+  const status=document.getElementById('cmp-status').value,notes=document.getElementById('cmp-notes').value.trim();
+  const cmp=getCompliance();cmp.unshift({id:uid(),title,cat,scope,due,owner,status,notes,created:new Date().toISOString()});
+  setCompliance(cmp);closeModal('modal-addCompliance');
+  ['cmp-title','cmp-scope','cmp-due','cmp-owner','cmp-notes'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('cmp-cat').selectedIndex=0;document.getElementById('cmp-status').selectedIndex=0;
+  renderCompliance();refreshOverview();toast('Compliance item added.');
+}
+
+function deleteCompliance(id){
+  if(!confirm('Remove this compliance item?'))return;
+  setCompliance(getCompliance().filter(c=>c.id!==id));renderCompliance();refreshOverview();toast('Item removed.');
+}
+
+function exportCompliance(){
+  const cmp=getCompliance();if(!cmp.length){toast('No compliance data to export.',true);return;}
+  const rows=cmp.map(c=>['Title','Category','Scope','Due','Owner','Status','Notes'].map((h,i)=>{const v=[c.title,c.cat,c.scope,c.due,c.owner,c.status,c.notes][i];return`"${String(v||'').replace(/"/g,'""')}"`;}).join(','));
+  const csv=[['Title','Category','Scope','Due','Owner','Status','Notes'].join(','),...rows].join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`t5s-ops-compliance-${new Date().toISOString().slice(0,10)}.csv`;a.click();toast('Report exported.');
+}
+
+function refreshAdminStats(){
+  const y=getYouth().length,ins=getInspections().length,cmp=getCompliance().length,entries=getEntries().length;
+  const facs=[...new Set(getYouth().map(y=>y.facility))].length;
+  document.getElementById('admYouth').textContent=y;
+  document.getElementById('admFacilities').textContent=facs;
+  document.getElementById('admSumYouth').textContent=`${y} record${y!==1?'s':''}`;
+  document.getElementById('admSumIns').textContent=`${ins} log${ins!==1?'s':''}`;
+  document.getElementById('admSumCmp').textContent=`${cmp} item${cmp!==1?'s':''}`;
+  document.getElementById('admSumEntries').textContent=`${entries} entr${entries!==1?'ies':'y'}`;
+}
+
+window.addEventListener('load',async()=>{
+  setLoad('Loading Clerk…');
+  let attempts=0;
+  while(typeof Clerk==='undefined'&&attempts<30){await new Promise(r=>setTimeout(r,200));attempts++;}
+  if(typeof Clerk==='undefined'){showError('Clerk failed to load.');return;}
+  try{setLoad('Authenticating…');await Clerk.load();}catch(e){showError('Clerk initialization failed: '+e.message);return;}
+
+  async function showDash(user){
+    if(_dashInit){populateDash(user);return;}
+    setLoad('Loading profile…');
+    try{await user.reload();}catch(e){}
+    try{Clerk.mountUserButton(document.getElementById('clerkBtn'),{appearance:APPEARANCE});}catch(e){}
+    if(!_profileMounted){try{Clerk.mountUserProfile(document.getElementById('clerkProfile'),{appearance:APPEARANCE});_profileMounted=true;}catch(e){}}
+    populateDash(user);populateFacilityFilter();_dashInit=true;
+    document.getElementById('topbar').style.display='flex';
+    document.getElementById('shell').style.display='flex';
+    const ls=document.getElementById('loadScreen');ls.classList.add('out');setTimeout(()=>ls.remove(),700);
+  }
+
+  if(Clerk.user){await showDash(Clerk.user);}
+  else{
+    setLoad('Checking session…');await new Promise(r=>setTimeout(r,900));
+    if(Clerk.user){await showDash(Clerk.user);}
+    else{setLoad('Redirecting…');setTimeout(()=>{window.location.href='https://ops.wearet5s.com'},800);}
+  }
+  Clerk.addListener(({user})=>{if(!user){_dashInit=false;_profileMounted=false;window.location.href='https://ops.wearet5s.com';}});
+});
+</script>
+</body>
+</html>
